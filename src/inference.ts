@@ -1,8 +1,8 @@
 import { InferenceConfg, ProgressCallback, VoiceId } from "./types";
-import { HF_BASE, ONNX_BASE, PATH_MAP, WASM_BASE } from './fixtures';
-import { readBlob, writeBlob } from './opfs';
-import { fetchBlob } from './http.js';
-import { pcm2wav } from './audio';
+import { HF_BASE, ONNX_BASE, PATH_MAP, WASM_BASE } from "./fixtures";
+import { readBlob, writeBlob } from "./opfs";
+import { fetchBlob } from "./http.js";
+import { pcm2wav } from "./audio";
 
 interface TtsSessionOptions {
   voiceId: VoiceId;
@@ -16,7 +16,7 @@ export class TtsSession {
   #createPiperPhonemize?: (moduleArg?: {}) => any;
   #modelConfig?: any;
   #ort?: typeof import("onnxruntime-web");
-  #ortSession?: import("onnxruntime-web").InferenceSession
+  #ortSession?: import("onnxruntime-web").InferenceSession;
   #progressCallback?: ProgressCallback;
 
   constructor({ voiceId, progress }: TtsSessionOptions) {
@@ -44,10 +44,7 @@ export class TtsSession {
     const modelConfigBlob = await getBlob(`${HF_BASE}/${path}.json`);
     this.#modelConfig = JSON.parse(await modelConfigBlob.text());
 
-    const modelBlob = await getBlob(
-      `${HF_BASE}/${path}`,
-      this.#progressCallback
-    );
+    const modelBlob = await getBlob(`${HF_BASE}/${path}`, this.#progressCallback);
     this.#ortSession = await this.#ort.InferenceSession.create(
       await modelBlob.arrayBuffer()
     );
@@ -93,11 +90,7 @@ export class TtsSession {
     const feeds = {
       input: new this.#ort!.Tensor("int64", phonemeIds, [1, phonemeIds.length]),
       input_lengths: new this.#ort!.Tensor("int64", [phonemeIds.length]),
-      scales: new this.#ort!.Tensor("float32", [
-        noiseScale,
-        lengthScale,
-        noiseW,
-      ]),
+      scales: new this.#ort!.Tensor("float32", [noiseScale, lengthScale, noiseW]),
     };
     if (Object.keys(this.#modelConfig.speaker_id_map).length) {
       Object.assign(feeds, {
@@ -135,12 +128,12 @@ export async function predict(
  * yet the method will fetch the blob.
  */
 async function getBlob(url: string, callback?: ProgressCallback) {
-	let blob: Blob | undefined = await readBlob(url);
+  let blob: Blob | undefined = await readBlob(url);
 
-	if (!blob) {
-		blob = await fetchBlob(url, callback);
-		await writeBlob(url, blob);
-	}
+  if (!blob) {
+    blob = await fetchBlob(url, callback);
+    await writeBlob(url, blob);
+  }
 
-	return blob;
+  return blob;
 }
